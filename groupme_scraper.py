@@ -17,6 +17,7 @@ def getBot(botName, groupId):
         if bot.group_id == groupId and bot.name == botName:
             return bot
 
+# to-do: list_all() is unnecessary, use list() until we've seen the page before
 def getMessages(groupId):
     for group in client.groups.list():
         if group.id == groupId:
