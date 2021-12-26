@@ -1,7 +1,7 @@
 from groupy import Client
 import requests
 import json
-
+import re
 
 
 AUTH_URL = 'https://accounts.spotify.com/api/token'
@@ -30,10 +30,6 @@ for group in client.groups.list():
         group_to_send = group
 
 for message in messages:
-    if "open.spotify.com/track" in message.text:
-        spotify_id = message.text[31:53]
-        request_url = 'https://api.spotify.com/v1/tracks/' + spotify_id
-        test = requests.get(request_url, headers=headers)
-        test = test.json()
-        text_to_send = "song URI found: "+ test['uri']
-        group_to_send.post(text=text_to_send)
+    x = re.findall("https:\/\/open\.spotify\.com\/track\/([0-9A-z]{22})", message.text)
+    for uri in x:
+        group_to_send.post(uri)
