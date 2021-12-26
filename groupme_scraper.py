@@ -1,15 +1,42 @@
 from groupy import Client
+import dotenv
+import os
 import re
 
-client = Client.from_token(token)
-messages = None
-group_to_send = None
-for group in client.groups.list():
-    if (group.name == "Spotify bot"):
-        messages = group.messages.list_all()
-        group_to_send = group
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file)
 
-for message in messages:
-    x = re.findall("https:\/\/open\.spotify\.com\/track\/([0-9A-z]{22})", message.text)
-    for uri in x:
-        group_to_send.post(uri)
+MOST_RECENT_MESSAGE_ID = os.environ["MOST_RECENT_MESSAGE_ID"]
+
+GROUPME_ACCESS_TOKEN = os.environ["GROUPME_ACCESS_TOKEN"]
+
+client = Client.from_token(GROUPME_ACCESS_TOKEN)
+
+def getBot(botName, groupId):
+    for bot in client.bots.list():
+        if bot.group_id == groupId and bot.name == botName:
+            return bot
+
+def getMessages(groupId):
+    for group in client.groups.list():
+        if group.id == groupId:
+            return group.messages.list_all()
+
+def getURIs(messages):
+    firstMessage = True
+    URIs = []
+    for message in messages:
+        # Changes most recent message in .env file - Assumes the following code won't error
+        if firstMessage:
+            firstMessage = False
+            dotenv.set_key(dotenv_file, "MOST_RECENT_MESSAGE_ID", message.id)
+        # Returns if we've seen this message before
+        if message.id == MOST_RECENT_MESSAGE_ID:
+            return URIs
+        if message.text is not None:
+            # Matches spotify URL pattern
+            x = re.findall("https:\/\/open\.spotify\.com\/track\/([0-9A-z]{22})", message.text)
+            for trackId in x:
+                URIs.append("spotify:track:" + trackId)
+    # If it's the first time running in this group:
+    return URIs
